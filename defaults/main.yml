@@ -6,6 +6,7 @@ __sssd_debian_sssd_packages:
   - libnss-sss
   - libpam-sss
   - sssd
+  - sssd-tools
 __sssd_redhat_sssd_packages:
   - authconfig
   - sssd
