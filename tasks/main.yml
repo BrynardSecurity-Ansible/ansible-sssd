@@ -54,6 +54,42 @@
   become: yes
   when: __sssd_redhat
 
+- name: run sss_obfuscate so ldap_default_authtok is not plaintext
+  shell: echo {{ sssd_domains[item]['ldap_default_authtok'] }} | sudo sss_obfuscate -d {{ item }} -f /etc/sssd/sssd.conf -s
+  become: yes
+  with_items: "{{ sssd_domains }}"
+  when: sssd_domains[item].ldap_default_authtok is defined
+
+- name: Copy ldap_tls_cacert to host for use by sssd as well as ldapsearch
+  copy:
+    src: "{{ sssd_local_ldap_cert_dir }}/{{ sssd_domains[item]['ldap_tls_cacert'] | basename }}"
+    dest: "{{ sssd_domains[item]['ldap_tls_cacert'] }}"
+    owner: root
+    group: root
+    mode: 'u=rw,g=r,o=r'
+  with_items: "{{ sssd_domains }}"
+  when: sssd_domains[item].ldap_tls_cacert is defined
+
+- name: ensure TLS_REQCERT is set for ldap utilities, this is global
+  lineinfile:
+    path: /etc/ldap/ldap.conf
+    regexp: '^TLS_REQCERT\t'
+    line: "TLS_REQCERT\t{{ sssd_domains[item]['ldap_tls_reqcert'] }}"
+    insertafter: EOF
+    state: present
+  become: yes
+  with_items: "{{ sssd_domains }}"
+  when: sssd_domains[item].ldap_tls_reqcert is defined
+
+- name: add ldap_tls_cacert to /etc/ldap/ldap.conf
+  lineinfile:
+    path: /etc/ldap/ldap.conf
+    line: "TLS_CACERT\t{{ sssd_domains[item]['ldap_tls_cacert'] }}"
+    insertafter: EOF
+    state: present
+  become: yes
+  with_items: "{{ sssd_domains }}"
+  when: sssd_domains[item].ldap_tls_cacert is defined
 
 - name: start sssd
   service:
