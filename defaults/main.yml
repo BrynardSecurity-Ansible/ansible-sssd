@@ -26,3 +26,5 @@ sssd_services: {}
 
 sssd_sssd:
   config_file_version: 2
+
+sssd_local_ldap_cert_dir: .
