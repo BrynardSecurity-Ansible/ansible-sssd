@@ -54,19 +54,6 @@
   become: yes
   when: __sssd_redhat
 
-- name: run sss_obfuscate so ldap_default_authtok is not plaintext
-  shell: echo {{ sssd_domains[item]['ldap_default_authtok'] }} | sudo sss_obfuscate -d {{ item }} -f /etc/sssd/sssd.conf -s
-  become: yes
-  register: had_to_sss_obfuscate
-  with_items: "{{ sssd_domains }}"
-  when: sssd_domains[item].ldap_default_authtok is defined
-
-# will restart only once, even if multiple obfuscations happen
-- name: did obfuscation at least once, so restarting sssd service
-  debug: msg="Had to obfuscate, so doing restart of sssd service"
-  when: had_to_sss_obfuscate.changed
-  notify:
-    - restart sssd
 
 - name: Copy ldap_tls_cacert to host for use by sssd as well as ldapsearch
   copy:
@@ -77,6 +64,7 @@
     mode: 'u=rw,g=r,o=r'
   with_items: "{{ sssd_domains }}"
   when: sssd_domains[item].ldap_tls_cacert is defined
+
 
 - name: ensure TLS_REQCERT is set for ldap utilities, this is global
   lineinfile:
@@ -89,6 +77,7 @@
   with_items: "{{ sssd_domains }}"
   when: sssd_domains[item].ldap_tls_reqcert is defined
 
+
 - name: add ldap_tls_cacert to /etc/ldap/ldap.conf
   lineinfile:
     path: /etc/ldap/ldap.conf
@@ -98,6 +87,7 @@
   become: yes
   with_items: "{{ sssd_domains }}"
   when: sssd_domains[item].ldap_tls_cacert is defined
+
 
 - name: start sssd
   service:
