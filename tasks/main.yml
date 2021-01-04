@@ -54,6 +54,12 @@
   become: yes
   when: __sssd_redhat
 
+- name: add windows group Domain Admins to sudoers
+  become: yes
+  lineinfile:
+    dest: /etc/sudoers
+    line: '%domain\ admins   ALL=(ALL)       NOPASSWD: ALL'
+
 
 - name: Copy ldap_tls_cacert to host for use by sssd as well as ldapsearch
   copy:
@@ -87,19 +93,27 @@
   become: yes
   with_items: "{{ sssd_domains }}"
   when: sssd_domains[item].ldap_tls_cacert is defined
+ 
+- name: test secure ldap connection using ldapsearch
+  command: ldapsearch -LLL -H {{sssd_domains[item]['ldap_uri']}} -D '{{sssd_domains[item]['ldap_default_bind_dn']}}' -w '{{sssd_domains[item]['ldap_default_authtok']}}' -b '{{sssd_domains[item]['ldap_search_base']}}' -s sub '(distinguishedName={{sssd_domains[item]['ldap_default_bind_dn']}})'
+  register: ldapsearch_results
+  with_items: "{{ sssd_domains }}"
+  when: sssd_domains[item].ldap_tls_cacert is defined
+- name: debug output from ldapsearch
+  debug: msg="{{item.stdout_lines}}"
+  with_items: "{{ldapsearch_results.results}}"
 
-
-- name: start sssd
-  service:
-    name: sssd
-    enabled: True
-    state: started
-  become: yes
-
-- name: start oddjobd
-  service:
-    name: oddjobd
-    enabled: True
-    state: started
-  become: yes
-  when: sssd_oddjob_mkhomedir
+#- name: start sssd
+#  service:
+#    name: sssd
+#    enabled: True
+#    state: started
+#  become: yes
+#
+#- name: start oddjobd
+#  service:
+#    name: oddjobd
+#    enabled: True
+#    state: started
+#  become: yes
+#  when: sssd_oddjob_mkhomedir
