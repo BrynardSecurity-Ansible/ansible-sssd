@@ -40,14 +40,11 @@
     - restart oddjobd
   when: sssd_oddjob_mkhomedir
 
-- name: add pam_mkhomedir.so to /etc/pam.d/common-session
-  lineinfile:
-    path: /etc/pam.d/common-session
-    line: session required  pam_mkhomedir.so skel=/etc/skel/ umask=0022
-    insertafter: 'session\s+required\s+pam_unix.so'
-  become: yes
-  when: sssd_oddjob_mkhomedir and __sssd_debian
-
+- name: home directory creation
+  become: true
+  # --force overwrites current PAM without question
+  # --package would lower priority of manual prompt
+  command: pam-auth-update --enable mkhomedir --force
 
 - name: run authconfig
   command: /usr/sbin/authconfig {{ sssd_authconfig | longoptions() }} --update
@@ -58,8 +55,7 @@
   become: yes
   lineinfile:
     dest: /etc/sudoers
-    line: '%domain\ admins   ALL=(ALL)       NOPASSWD: ALL'
-
+    line: '%domain_admins   ALL=(ALL)       NOPASSWD: ALL'
 
 - name: Copy ldap_tls_cacert to host for use by sssd as well as ldapsearch
   copy:
@@ -71,7 +67,6 @@
   with_items: "{{ sssd_domains }}"
   when: sssd_domains[item].ldap_tls_cacert is defined
 
-
 - name: ensure TLS_REQCERT is set for ldap utilities, this is global
   lineinfile:
     path: /etc/ldap/ldap.conf
@@ -82,7 +77,6 @@
   become: yes
   with_items: "{{ sssd_domains }}"
   when: sssd_domains[item].ldap_tls_reqcert is defined
-
 
 - name: add ldap_tls_cacert to /etc/ldap/ldap.conf
   lineinfile:
@@ -102,18 +96,5 @@
 - name: debug output from ldapsearch
   debug: msg="{{item.stdout_lines}}"
   with_items: "{{ldapsearch_results.results}}"
+  when: ldapsearch_results.changed
 
-#- name: start sssd
-#  service:
-#    name: sssd
-#    enabled: True
-#    state: started
-#  become: yes
-#
-#- name: start oddjobd
-#  service:
-#    name: oddjobd
-#    enabled: True
-#    state: started
-#  become: yes
-#  when: sssd_oddjob_mkhomedir
