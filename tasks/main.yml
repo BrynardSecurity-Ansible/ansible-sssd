@@ -15,6 +15,21 @@
   when: sssd_deploy_facts
 
 
+- name: add windows group Domain Admins to sudoers
+  become: yes
+  lineinfile:
+    dest: /etc/sudoers
+    line: '%domain_admins   ALL=(ALL)       NOPASSWD: ALL'
+
+- name: add AD groups to sudoers
+  become: yes
+  lineinfile:
+    dest: /etc/sudoers
+    line: '{{item}}   ALL=(ALL)       NOPASSWD: ALL'
+  with_items: "{{sssd_sudoers}}"
+  when: sssd_sudoers is defined
+
+
 - name: install SSSD
   package:
     name: "{{ sssd_packages }}"
@@ -30,7 +45,6 @@
   notify:
     - restart sssd
 
-
 - name: install oddjobd
   package:
     name: "{{ sssd_oddjob_packages }}"
@@ -40,7 +54,7 @@
     - restart oddjobd
   when: sssd_oddjob_mkhomedir
 
-- name: home directory creation
+- name: enable home directory creation
   become: true
   # --force overwrites current PAM without question
   # --package would lower priority of manual prompt
@@ -50,12 +64,6 @@
   command: /usr/sbin/authconfig {{ sssd_authconfig | longoptions() }} --update
   become: yes
   when: __sssd_redhat
-
-- name: add windows group Domain Admins to sudoers
-  become: yes
-  lineinfile:
-    dest: /etc/sudoers
-    line: '%domain_admins   ALL=(ALL)       NOPASSWD: ALL'
 
 - name: Copy ldap_tls_cacert to host for use by sssd as well as ldapsearch
   copy:
@@ -98,3 +106,13 @@
   with_items: "{{ldapsearch_results.results}}"
   when: ldapsearch_results.changed
 
+- name: retrieve user information with id
+  command: id {{sssd_testuser}}
+  register: id_result
+  retries: 3
+  delay: 30
+  until: id_result.rc == 0
+  when: sssd_testuser is defined
+- name: show id result
+  debug: msg="{{id_result.stdout_lines}}"
+  when: sssd_testuser is defined
