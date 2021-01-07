@@ -19,6 +19,10 @@ domains = {{ sssd_domains.keys() | join(',') }}
 {% for domain, config in sssd_domains.items() %}
 [domain/{{ domain }}]
 {% for key, value in config.items()|sort(attribute='0') %}
+{% if key == "ldap_default_authtok" %}
+{{ key }} = {{ extravar_ldap_default_authtok | default(value) }}
+{% else %}
 {{ key }} = {{ value }}
+{% endif %}
 {% endfor %}
 {% endfor %}
