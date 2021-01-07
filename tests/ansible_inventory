@@ -1,0 +1,12 @@
+# aliases
+bionic1 ansible_host=192.168.x.y
+focal1 ansible_host=192.168.x.z
+
+[ldap_krb5_managed]
+
+[ldap_managed]
+bionic1 ansible_user=ubuntu ansible_password=***** ansible_become_pass=*****
+focal1 ansible_user=ubuntu ansible_password=***** ansible_become_pass=*****
+
+[all:vars]
+ansible_python_interpreter=/usr/bin/python3

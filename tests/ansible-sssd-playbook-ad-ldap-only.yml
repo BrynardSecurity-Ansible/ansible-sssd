@@ -1,0 +1,66 @@
+# ldap only
+---
+- hosts: all
+  become: yes
+  roles:
+    # time sync, https://github.com/fabianlee/ansible-role-chrony.git
+    - roles/ansible-role-chrony
+    # fully configured sssd, https://github.com/fabianlee/ansible-sssd.git
+    - roles/ansible-sssd
+
+  vars:
+    # ROLE ansible-role-chrony
+    wtd_chrony_cfg_servers:
+      - name: pool.ntp.org iburst maxpoll 10
+
+    # ROLE ansible-sssd
+    sssd_sudoers: [ '%vcap' ]
+    sssd_testuser: ldapsvcaccount
+    sssd_oddjob_mkhomedir: True
+    sssd_domains:
+      FABIAN.LEE:
+        debug_level: 9
+
+        # ldap only providers, no domain join required
+        id_provider: ldap
+        auth_provider: ldap
+        access_provider: ldap
+        sudo_provider: ldap
+
+        use_fully_qualified_domain_names: False
+
+        # secure port requires root cert from DC
+        ldap_uri: ldaps://flee-dc1.fabian.lee:636
+        ldap_schema: AD
+        ldap_id_use_start_tls: false
+        ldap_tls_reqcert: demand
+        ldap_tls_cacert: /etc/ssl/certs/myCA.pem
+        ldap_access_filter: (objectClass=user)
+
+        ldap_default_bind_dn: cn=ldapsvcaccount,cn=Users,dc=FABIAN,dc=LEE
+        ldap_default_authtok: "*****"
+        ldap_default_authtok_type: password
+
+        ldap_search_base: cn=Users,dc=FABIAN,dc=LEE
+        ldap_user_search_base: cn=Users,dc=FABIAN,dc=LEE
+        ldap_user_object_class: user
+        ldap_user_gecos: name
+        ldap_group_search_base: cn=Users,dc=FABIAN,dc=LEE
+        ldap_group_object_class: group
+        ldap_user_name: sAMAccountName
+        ldap_user_principal: userPrincipalName
+        ldap_group_name: cn
+        ldap_user_objectsid: objectSid
+        ldap_group_objectsid: objectSid
+        ldap_user_primary_group: primaryGroupID
+        ldap_id_mapping: True
+        ldap_disable_range_retrieval: True
+        ldap_referrals: False
+
+        min_id: 10000
+        override_shell: /bin/bash
+        case_sensitive: False
+        ignore_group_members: True
+        fallback_homedir: /home/%u
+        cache_credentials: true
+

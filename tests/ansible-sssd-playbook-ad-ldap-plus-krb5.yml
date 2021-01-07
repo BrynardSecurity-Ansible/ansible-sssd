@@ -1,0 +1,90 @@
+# krb5 and ldap
+---
+- hosts: all
+  become: yes
+  roles:
+    # time sync, https://github.com/fabianlee/ansible-role-chrony.git
+    - roles/ansible-role-chrony
+    # Windows DC as primary dns, https://github.com/fabianlee/ansible-role-system-dns.git
+    - roles/ansible-role-systemd-dns
+    # join windows domain using realm, https://github.com/fabianlee/ansible-role-domain-join.git
+    - roles/ansible-role-domain-join
+    # fully configured sssd, https://github.com/fabianlee/ansible-sssd.git
+    - roles/ansible-sssd
+
+  vars:
+    # ROLE ansible-role-chrony
+    wtd_chrony_cfg_servers:
+      - name: pool.ntp.org iburst maxpoll 10
+
+    # ROLE ansible-role-systemd-dns
+    # realm requires that primary dns be domain controller
+    systemd_dns_primary: 192.168.122.186
+    systemd_dns_domains: fabian.lee
+
+    # ROLE ansible-role-domain-join
+    # does domain join with realm, krb5 config
+    realm_domain: FABIAN.LEE
+    realm_domain_server: flee-dc1.fabian.lee
+    kerberos_user: joindomainsvcaccount
+    kerberos_user_password: "*****"
+    realm_ad_ou: CN=computers,DC=FABIAN,DC=LEE
+
+    # ROLE ansible-sssd
+    # fully configures ssd
+    sssd_sudoers: [ '%vcap' ]
+    sssd_testuser: ldapsvcaccount
+    sssd_oddjob_mkhomedir: True
+    sssd_domains:
+      FABIAN.LEE:
+        debug_level: 9
+
+        id_provider: ldap
+        auth_provider: krb5
+        access_provider: ldap
+        sudo_provider: ldap
+
+        use_fully_qualified_names: False
+        # try with these commented out
+        #ad_server: flee-dc1.fabian.lee
+        #ad_domain: FABIAN.LEE
+
+        krb5_server: flee-dc1.fabian.lee
+        krb5_realm: FABIAN.LEE
+        krb5_store_password_if_offline: True
+        realmd_tags: manages-system joined-with-adcli
+
+        # secure port requires root cert from DC
+        ldap_uri: ldaps://flee-dc1.fabian.lee:636
+        ldap_schema: AD
+        ldap_id_use_start_tls: true
+        ldap_tls_reqcert: demand
+        ldap_tls_cacert: /etc/ssl/certs/myCA.pem
+        ldap_access_filter: (objectClass=user)
+
+        ldap_default_bind_dn: cn=ldapsvcaccount,cn=Users,dc=FABIAN,dc=LEE
+        ldap_default_authtok: "*****"
+        ldap_default_authtok_type: password
+
+        ldap_search_base: cn=Users,dc=FABIAN,dc=LEE
+        ldap_user_search_base: cn=Users,dc=FABIAN,dc=LEE
+        ldap_user_object_class: user
+        ldap_user_gecos: name
+        ldap_group_search_base: cn=Users,dc=FABIAN,dc=LEE
+        ldap_group_object_class: group
+        ldap_user_name: sAMAccountName
+        ldap_user_principal: userPrincipalName
+        ldap_group_name: cn
+        ldap_user_objectsid: objectSid
+        ldap_group_objectsid: objectSid
+        ldap_user_primary_group: primaryGroupID
+        ldap_id_mapping: True
+        ldap_disable_range_retrieval: True
+        ldap_referrals: False
+
+        min_id: 10000
+        override_shell: /bin/bash
+        case_sensitive: False
+        ignore_group_members: True
+        fallback_homedir: /home/%u
+        cache_credentials: true
