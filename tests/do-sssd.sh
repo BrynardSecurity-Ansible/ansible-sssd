@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# show commands, exit if any errors
+set -ex
+
 # sanity test
 ansible all -m ping
 
