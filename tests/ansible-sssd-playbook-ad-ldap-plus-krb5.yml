@@ -5,7 +5,7 @@
   roles:
     # time sync, https://github.com/fabianlee/ansible-role-chrony.git
     - roles/ansible-role-chrony
-    # Windows DC as primary dns, https://github.com/fabianlee/ansible-role-system-dns.git
+    # Windows DC as primary dns, https://github.com/fabianlee/ansible-role-systemd-dns.git
     - roles/ansible-role-systemd-dns
     # join windows domain using realm, https://github.com/fabianlee/ansible-role-domain-join.git
     - roles/ansible-role-domain-join
