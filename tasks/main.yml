@@ -106,6 +106,10 @@
   with_items: "{{ldapsearch_results.results}}"
   when: ldapsearch_results.changed
 
+# make sure sssd restart happens so test can be run (instead of by handler at end)
+- name: Flush handlers
+  meta: flush_handlers
+
 - name: retrieve user information with id
   command: id {{sssd_testuser}}
   register: id_result
