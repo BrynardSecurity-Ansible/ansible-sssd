@@ -1,6 +1,21 @@
 #!/bin/bash
+#
+# clones or does rebase pull of used roles
+#
 
-git clone https://github.com/fabianlee/ansible-role-chrony.git
-git clone https://github.com/fabianlee/ansible-role-domain-join.git
-git clone https://github.com/fabianlee/ansible-sssd.git
-git clone https://github.com/fabianlee/ansible-role-systemd-dns.git
+function pull() {
+  cd $1
+  git pull -r
+  cd ..
+}
+
+for role in ansible-role-chrony ansible-role-domain-join ansible-sssd ansible-role-systemd-dns; do
+
+  if [ -d $role ]; then
+    cd $role; git pull -r; cd ..
+  else
+    git clone https://github.com/fabianlee/$role.git
+  fi
+
+done
+
