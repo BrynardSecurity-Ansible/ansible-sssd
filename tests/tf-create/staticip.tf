@@ -1,19 +1,17 @@
-# variables that can be overriden
-variable "hostname" { default="staticip" }
+# variables that can be overriden in terraform.tfvars
 variable "password" { default="linux" }
 variable "dns_domain" { default="my.test"  }
 variable "ip_type" { default = "static" } # dhcp is other valid type
 variable "memoryMB" { default = 1024*1 }
 variable "cpu" { default = 1 }
 variable "prefixIP" { default = "192.168.122" }
-variable "ubuntuCodeName" { default = "bionic" }
 
-
+# list of hosts to be created, use 'for_each' on relevant resources
 locals {
   ubuntu_versions = { 
-    "xenial2" = { code_name = "xenial", octetIP = "200" },
-    "bionic2" = { code_name = "bionic", octetIP = "201" },
-    "focal2"  = { code_name = "focal",  octetIP = "202" },
+    "xenial1" = { code_name = "xenial", octetIP = "200" },
+    "bionic1" = { code_name = "bionic", octetIP = "201" },
+    "focal1"  = { code_name = "focal",  octetIP = "202" },
   }
 }
 
@@ -26,21 +24,22 @@ provider "libvirt" {
   uri = "qemu:///system"
 }
 
+
 # fetch the latest ubuntu release image from their mirrors
 resource "libvirt_volume" "os_image" {
   for_each = local.ubuntu_versions
 
-  name = "${each.key}-os_image"
+  name = "${each.key}.qcow2"
   pool = "default"
   source = "https://cloud-images.ubuntu.com/${each.value.code_name}/current/${each.value.code_name}-server-cloudimg-amd64${ each.value.code_name == "xenial" ? "-disk1":"" }.img"
   format = "qcow2"
 }
 
 # Use CloudInit ISO to add ssh-key to the instance
-resource "libvirt_cloudinit_disk" "commoninit" {
+resource "libvirt_cloudinit_disk" "cloudinit" {
   for_each = local.ubuntu_versions
 
-  name = "${each.key}-commoninit.iso"
+  name = "${each.key}-cloudinit.iso"
   pool = "default"
   user_data = data.template_file.user_data[each.key].rendered
   network_config = data.template_file.network_config[each.key].rendered
@@ -81,13 +80,13 @@ resource "libvirt_domain" "domain-ubuntu" {
 
   disk {
        volume_id = libvirt_volume.os_image[each.key].id
+       #file = 
   }
   network_interface {
        network_name = "default"
-       addresses = [ "${var.prefixIP}.${each.value.octetIP}" ]
   }
 
-  cloudinit = libvirt_cloudinit_disk.commoninit[each.key].id
+  cloudinit = libvirt_cloudinit_disk.cloudinit[each.key].id
 
   # IMPORTANT
   # Ubuntu can hang is a isa-serial is not present at boot time.
@@ -110,6 +109,6 @@ output "hosts" {
   # output does not support 'for_each', so use zipmap as workaround
   value = zipmap( 
                 values(libvirt_domain.domain-ubuntu)[*].name,
-                values(libvirt_domain.domain-ubuntu)[*].network_interface.0.addresses
+                values(libvirt_domain.domain-ubuntu)[*].vcpu
                 )
 }
