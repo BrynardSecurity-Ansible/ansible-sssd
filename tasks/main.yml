@@ -52,6 +52,7 @@
   become: yes
   notify:
     - restart oddjobd
+    - restart sssd
   when: sssd_oddjob_mkhomedir
 
 - name: enable home directory creation
@@ -59,6 +60,8 @@
   # --force overwrites current PAM without question
   # --package would lower priority of manual prompt (needed on xenial, bionic/focal work without flag)
   command: pam-auth-update --enable mkhomedir --force --package
+  notify:
+    - restart sssd
 
 - name: run authconfig
   command: /usr/sbin/authconfig {{ sssd_authconfig | longoptions() }} --update
