@@ -1,6 +1,7 @@
 # aliases
-bionic1 ansible_host=192.168.x.y ansible_user=ubuntu ansible_password=***** ansible_become_pass=*****
-focal1 ansible_host=192.168.x.z ansible_user=ubuntu ansible_password=***** ansible_become_pass=*****
+xenial1 ansible_host=192.168.122.200 ansible_user=ubuntu ansible_password=linux ansible_become_pass=linux
+bionic1 ansible_host=192.168.122.201 ansible_user=ubuntu ansible_password=linux ansible_become_pass=linux
+focal1 ansible_host=192.168.122.202 ansible_user=ubuntu ansible_password=linux ansible_become_pass=linux
 
 [ldap_krb5_managed]
 bionic1
