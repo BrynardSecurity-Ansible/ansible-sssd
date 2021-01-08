@@ -4,13 +4,16 @@ bionic1 ansible_host=192.168.122.201 ansible_user=ubuntu ansible_password=linux 
 focal1 ansible_host=192.168.122.202 ansible_user=ubuntu ansible_password=linux ansible_become_pass=linux
 
 [ldap_krb5_managed]
+xenial1
 bionic1
 focal1
 
 [ldap_managed]
+xenial1
 bionic1
 focal1
 
 [all:vars]
 ansible_python_interpreter=/usr/bin/python3
+# if ssh requires private key
 ansible_ssh_private_key_file = tf-create/id_rsa
