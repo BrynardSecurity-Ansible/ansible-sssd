@@ -57,8 +57,8 @@
 - name: enable home directory creation
   become: true
   # --force overwrites current PAM without question
-  # --package would lower priority of manual prompt
-  command: pam-auth-update --enable mkhomedir --force
+  # --package would lower priority of manual prompt (needed on xenial, bionic/focal work without flag)
+  command: pam-auth-update --enable mkhomedir --force --package
 
 - name: run authconfig
   command: /usr/sbin/authconfig {{ sssd_authconfig | longoptions() }} --update
