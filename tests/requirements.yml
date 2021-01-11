@@ -1,0 +1,22 @@
+# pulls dependent roles, use --force to do updates if changes were made
+# ansible-galaxy install -r requirements.yml -p roles/ --force
+---
+- name: ansible-role-chrony
+  scm: git
+  src: git+https://github.com/fabianlee/ansible-role-chrony.git
+  #version: master
+
+- name: ansible-role-domain-join
+  scm: git
+  src: git+https://github.com/fabianlee/ansible-role-domain-join.git
+  #version: main
+
+- name: ansible-sssd
+  scm: git
+  src: git+https://github.com/fabianlee/ansible-sssd.git
+  #version: master
+
+- name: ansible-role-systemd-dns
+  scm: git
+  src: git+https://github.com/fabianlee/ansible-role-systemd-dns.git
+  #version: main
