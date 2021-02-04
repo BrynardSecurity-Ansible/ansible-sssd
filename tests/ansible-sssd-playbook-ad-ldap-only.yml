@@ -27,7 +27,7 @@
         access_provider: ldap
         sudo_provider: ldap
 
-        use_fully_qualified_domain_names: False
+        use_fully_qualified_names: False
 
         # secure port requires root cert from DC
         ldap_uri: ldaps://flee-dc1.fabian.lee:636
