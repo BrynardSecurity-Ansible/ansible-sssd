@@ -20,7 +20,7 @@ domains = {{ sssd_domains.keys() | join(',') }}
 [domain/{{ domain }}]
 {% for key, value in config.items()|sort(attribute='0') %}
 {% if key == "ldap_default_authtok" %}
-{{ key }} = {{ extravar_ldap_default_authtok | default(value) }}
+{{ key }} = {{ ldap_default_authtok | default(value) }}
 {% else %}
 {{ key }} = {{ value }}
 {% endif %}
